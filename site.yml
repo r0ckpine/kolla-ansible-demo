@@ -1,0 +1,16 @@
+---
+# tag install
+- name: Install
+  ansible.builtin.import_playbook: kolla_install.yml
+
+# tag config
+- name: Configure
+  ansible.builtin.import_playbook: kolla_config.yml
+
+# tag deploy
+- name: Deploy
+  ansible.builtin.import_playbook: kolla_deploy.yml
+
+# tag post
+- name: Post-deploy
+  ansible.builtin.import_playbook: kolla_post_deploy.yml

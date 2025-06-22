@@ -1,0 +1,40 @@
+---
+- name: Post-deploy Kolla-ansible
+  hosts: kolla
+  tags:
+    - post
+  tasks:
+    - name: Install OpenStack CLI
+      ansible.builtin.pip:
+        name: python-openstackclient
+        state: latest
+        virtualenv: "{{ kolla_venv }}"
+        extra_args: "-c https://releases.openstack.org/constraints/upper/master"
+
+    - name: Generate clouds.yaml and other credentials
+      ansible.builtin.shell: |
+        source {{ kolla_venv }}/bin/activate
+        kolla-ansible post-deploy -i /etc/kolla/{{ kolla_inventory }}
+      args:
+        executable: /bin/bash
+
+    - name: Create example resources such as networks, images, and so on
+      ansible.builtin.shell: |
+        source {{ kolla_venv }}/bin/activate
+        {{ kolla_venv }}/share/kolla-ansible/init-runonce
+
+    - name: Create OpenStack CLI configuration directory
+      ansible.builtin.file:
+        path: "{{ ansible_user_dir }}/.config/openstack"
+        state: directory
+        owner: "{{ ansible_user_id }}"
+        group: "{{ ansible_user_gid }}"
+        mode: '0755'
+
+    - name: Copy clouds.yaml to OpenStack CLI configuration directory
+      ansible.builtin.copy:
+        src: /etc/kolla/clouds.yaml
+        dest: "{{ ansible_user_dir }}/.config/openstack/clouds.yaml"
+        owner: "{{ ansible_user_id }}"
+        group: "{{ ansible_user_gid }}"
+        mode: '0644'

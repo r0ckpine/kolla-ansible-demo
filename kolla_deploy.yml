@@ -1,0 +1,26 @@
+---
+- name: Deploy Kolla-ansible
+  hosts: kolla
+  tags:
+    - deploy
+  tasks:
+    - name: Bootstrap servers with kolla deploy dependencies
+      ansible.builtin.shell: |
+        source {{ kolla_venv }}/bin/activate
+        kolla-ansible bootstrap-servers -i /etc/kolla/{{ kolla_inventory }}
+      args:
+        executable: /bin/bash
+
+    - name: Do pre-deployment checks
+      ansible.builtin.shell: |
+        source {{ kolla_venv }}/bin/activate
+        kolla-ansible prechecks -i /etc/kolla/{{ kolla_inventory }}
+      args:
+        executable: /bin/bash
+
+    - name: Deploy OpenStack
+      ansible.builtin.shell: |
+        source {{ kolla_venv }}/bin/activate
+        kolla-ansible deploy -i /etc/kolla/{{ kolla_inventory }}
+      args:
+        executable: /bin/bash

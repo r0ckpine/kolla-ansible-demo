@@ -1,0 +1,8 @@
+---
+### Kolla-ansible git branch or tag
+### If you want to use a specific branch or tag, set it here.
+kolla_version: master
+### Kolla-ansible virtual environment path
+kolla_venv: "{{ ansible_user_dir }}/kolla-venv"
+### Kolla-ansible innventory: all-in-one or multinode
+kolla_inventory: all-in-one

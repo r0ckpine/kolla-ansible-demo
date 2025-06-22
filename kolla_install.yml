@@ -1,0 +1,77 @@
+---
+- name: Install kolla-ansible
+  hosts: kolla
+  tags:
+    - install
+  tasks:
+    - name: Install Python build dependencies
+      ansible.builtin.dnf:
+        name:
+          - git
+          - python3.12-devel
+          - libffi-devel
+          - gcc
+          - openssl-devel
+          - python3-libselinux
+        update_cache: true
+        state: latest
+      become: true
+
+    - name: Create a virtual environment
+      ansible.builtin.command:
+        cmd: python3.12 -m venv {{ kolla_venv }}
+
+    - name: Update pip in the virtual environment
+      ansible.builtin.pip:
+        name: pip
+        state: latest
+        virtualenv: "{{ kolla_venv }}"
+
+    - name: Install kolla-ansible
+      ansible.builtin.pip:
+        name: "git+https://opendev.org/openstack/kolla-ansible@{{ kolla_version }}"
+        state: latest
+        virtualenv: "{{ kolla_venv }}"
+
+    - name: Create /etc/kolla directory
+      ansible.builtin.file:
+        path: /etc/kolla
+        state: directory
+        owner: "{{ ansible_user_id }}"
+        group: "{{ ansible_user_gid }}"
+        mode: '0755'
+      become: true
+
+    - name: Copy Kolla-ansible configuration files
+      ansible.builtin.copy:
+        src: "{{ kolla_venv }}/share/kolla-ansible/etc_examples/kolla/{{ item }}"
+        dest: /etc/kolla/
+        owner: "{{ ansible_user_id }}"
+        group: "{{ ansible_user_gid }}"
+        mode: '0644'
+      loop:
+        - globals.yml
+        - passwords.yml
+
+    - name: Copy Kolla-ansible all-in-one inventory file
+      ansible.builtin.copy:
+        src: "{{ kolla_venv }}/share/kolla-ansible/ansible/inventory/all-in-one"
+        dest: /etc/kolla/
+        owner: "{{ ansible_user_id }}"
+        group: "{{ ansible_user_gid }}"
+        mode: '0644'
+
+    - name: Configure Kolla-ansible multinode inventory file
+      ansible.builtin.template:
+        src: multinode
+        dest: /etc/kolla/multinode
+        owner: "{{ ansible_user_id }}"
+        group: "{{ ansible_user_gid }}"
+        mode: '0644'
+
+    - name: Install Ansible Galaxy requirements
+      ansible.builtin.shell: |
+        source {{ kolla_venv }}/bin/activate
+        kolla-ansible install-deps
+      args:
+        executable: /bin/bash

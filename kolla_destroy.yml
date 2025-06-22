@@ -1,0 +1,12 @@
+---
+- name: Destroy Kolla-ansible
+  hosts: kolla
+  tags:
+    - destroy
+  tasks:
+    - name: Destroy Kolla-ansible deployment
+      ansible.builtin.shell: |
+        source {{ kolla_venv }}/bin/activate
+        kolla-ansible destroy -i /etc/kolla/{{ kolla_inventory }} --yes-i-really-really-mean-it
+      args:
+        executable: /bin/bash

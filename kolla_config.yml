@@ -1,0 +1,18 @@
+---
+- name: Configure kolla-ansible
+  hosts: kolla
+  tags:
+    - config
+  tasks:
+    - name: Generate Kolla passwords
+      ansible.builtin.command:
+        cmd: >
+          {{ kolla_venv }}/bin/kolla-genpwd
+
+    - name: Configure Kolla-ansible global parameters
+      ansible.builtin.template:
+        src: globals.yml.all-in-one.j2
+        dest: /etc/kolla/globals.yml
+        mode: '0644'
+      vars:
+        kolla_internal_vip_address: "{{ ansible_eth0.ipv4.address }}"
